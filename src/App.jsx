@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Book, Monitor, Trophy, Languages, Grid, ArrowRightLeft, MessageCircle } from 'lucide-react';
+import TestModule from './TestModule';
 
 const lessons = [
   {
@@ -249,21 +250,39 @@ const Module = ({ module }) => {
 
 const TamilLearningApp = () => {
   const [selectedLesson, setSelectedLesson] = useState(null);
-
-  // Add meta viewport tag for proper mobile rendering
-  React.useEffect(() => {
-    // Check if viewport meta tag exists
-    if (!document.querySelector('meta[name="viewport"]')) {
-      const meta = document.createElement('meta');
-      meta.name = 'viewport';
-      meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
-      document.getElementsByTagName('head')[0].appendChild(meta);
-    }
-  }, []);
+  const [mode, setMode] = useState('learn'); // 'learn' or 'test'
 
   return (
     <div className="max-w-6xl mx-auto px-2 py-1 sm:p-4 bg-gradient-to-b from-blue-50 to-white min-h-screen">
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-center mb-3 sm:mb-4 md:mb-8 text-blue-900 py-2">Tamil Learning App</h1>
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
+        <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-900">
+          {selectedLesson ? 'Tamil Learning App' : 'Tamil Learning App'}
+        </h1>
+        {!selectedLesson && (
+          <div className="flex gap-2 mt-4 sm:mt-0">
+            <button
+              onClick={() => setMode('learn')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                mode === 'learn'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-blue-600 border border-blue-600'
+              }`}
+            >
+              Learn
+            </button>
+            <button
+              onClick={() => setMode('test')}
+              className={`px-4 py-2 rounded-lg transition-colors ${
+                mode === 'test'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white text-blue-600 border border-blue-600'
+              }`}
+            >
+              Test
+            </button>
+          </div>
+        )}
+      </div>
       
       {!selectedLesson ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -298,9 +317,13 @@ const TamilLearningApp = () => {
           
           <h2 className="text-2xl font-semibold mb-6">{selectedLesson.title}</h2>
           
-          {selectedLesson.modules.map((module, index) => (
-            <Module key={index} module={module} />
-          ))}
+          {mode === 'learn' ? (
+            selectedLesson.modules.map((module, index) => (
+              <Module key={index} module={module} />
+            ))
+          ) : (
+            <TestModule lesson={selectedLesson} />
+          )}
         </div>
       )}
     </div>
