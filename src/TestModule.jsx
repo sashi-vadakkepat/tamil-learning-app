@@ -1,6 +1,106 @@
 import React, { useState, useEffect } from 'react';
 import { Check, X, RefreshCw, Award } from 'lucide-react';
 
+// Helper functions for test generation
+const shuffleArray = (array) => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
+const generateFakeAnswers = (count) => {
+  const fakeAnswers = [
+    'இது சரியான விடை அல்ல',
+    'மேலும் படிக்கவும்',
+    'முயற்சி செய்யவும்',
+    'வேறு பதில் தேர்வு செய்யவும்'
+  ];
+  return shuffleArray(fakeAnswers).slice(0, count);
+};
+
+const generateQuestionFromModule = (module, allModules) => {
+  const questions = [];
+  
+  switch (module.type) {
+    case 'translations':
+      module.content.forEach(item => {
+        // Get incorrect options from other translation items
+        const otherOptions = allModules
+          .filter(m => m.type === 'translations')
+          .flatMap(m => m.content)
+          .map(c => c.tamil)
+          .filter(tamil => tamil !== item.tamil);
+
+        const options = shuffleArray([item.tamil, ...shuffleArray(otherOptions).slice(0, 3)]);
+        
+        questions.push({
+          type: 'translation',
+          question: `What is the Tamil word for "${item.english}"?`,
+          correctAnswer: item.tamil,
+          options
+        });
+      });
+      break;
+
+    case 'meanings':
+      module.content.forEach(item => {
+        const otherMeanings = allModules
+          .filter(m => m.type === 'meanings')
+          .flatMap(m => m.content)
+          .map(c => c.meaning)
+          .filter(meaning => meaning !== item.meaning);
+
+        const options = shuffleArray([item.meaning, ...shuffleArray(otherMeanings).slice(0, 3)]);
+        
+        questions.push({
+          type: 'meaning',
+          question: `What is the meaning of "${item.word}"?`,
+          correctAnswer: item.meaning,
+          options
+        });
+      });
+      break;
+
+    case 'opposites':
+      module.content.forEach(item => {
+        const otherOpposites = allModules
+          .filter(m => m.type === 'opposites')
+          .flatMap(m => m.content)
+          .map(c => c.opposite)
+          .filter(opposite => opposite !== item.opposite);
+
+        const options = shuffleArray([item.opposite, ...shuffleArray(otherOpposites).slice(0, 3)]);
+        
+        questions.push({
+          type: 'opposite',
+          question: `What is the opposite of "${item.word}"?`,
+          correctAnswer: item.opposite,
+          options
+        });
+      });
+      break;
+
+    case 'qa':
+      module.content.forEach(item => {
+        if (item.answer && item.answer[0]) {
+          const options = shuffleArray([item.answer[0], ...generateFakeAnswers(3)]);
+          questions.push({
+            type: 'comprehension',
+            question: item.question,
+            correctAnswer: item.answer[0],
+            options
+          });
+        }
+      });
+      break;
+  }
+
+  return questions;
+};
+
 const TestModule = ({ lesson }) => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [score, setScore] = useState(0);
@@ -9,139 +109,14 @@ const TestModule = ({ lesson }) => {
   const [isAnswered, setIsAnswered] = useState(false);
   const [questions, setQuestions] = useState([]);
 
-  // Helper function to shuffle array
-  const shuffleArray = (array) => {
-    if (!Array.isArray(array)) return [];
-    let currentIndex = array.length;
-    while (currentIndex !== 0) {
-      const randomIndex = Math.floor(Math.random() * currentIndex);
-      currentIndex--;
-      [array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-    }
-    return array;
-  };
-
-  // Helper function to get random options
-  const getRandomOptions = (content, key, exclude, count) => {
-    if (!Array.isArray(content)) return [];
-    const options = content
-      .map(item => item[key])
-      .filter(item => item !== exclude && item);
-    return shuffleArray(options).slice(0, Math.min(count, options.length));
-  };
-
-  // Helper function to generate fake answers for QA
-  const generateFakeAnswers = (count) => {
-    const fakeAnswers = [
-      'இது சரியான விடை அல்ல',
-      'மேலும் படிக்கவும்',
-      'முயற்சி செய்யவும்',
-      'வேறு பதில் தேர்வு செய்யவும்'
-    ];
-    return shuffleArray(fakeAnswers).slice(0, count);
-  };
-
-  // Generate questions based on lesson content
-  const generateQuestions = (lessonData) => {
-    if (!lessonData || !lessonData.modules) {
-      console.warn('Invalid lesson data provided to TestModule');
-      return [];
-    }
-
-    let generatedQuestions = [];
-    
-    lessonData.modules.forEach(module => {
-      if (!module || !module.content || !Array.isArray(module.content)) {
-        return;
-      }
-
-      switch (module.type) {
-        case 'translations':
-          module.content.forEach(item => {
-            if (item.english && item.tamil) {
-              const options = shuffleArray([
-                item.tamil,
-                ...getRandomOptions(module.content, 'tamil', item.tamil, 3)
-              ]);
-              if (options.length >= 2) {  // Only add if we have enough options
-                generatedQuestions.push({
-                  type: 'translation',
-                  question: `What is the Tamil word for "${item.english}"?`,
-                  correctAnswer: item.tamil,
-                  options
-                });
-              }
-            }
-          });
-          break;
-          
-        case 'meanings':
-          module.content.forEach(item => {
-            if (item.word && item.meaning) {
-              const options = shuffleArray([
-                item.meaning,
-                ...getRandomOptions(module.content, 'meaning', item.meaning, 3)
-              ]);
-              if (options.length >= 2) {
-                generatedQuestions.push({
-                  type: 'meaning',
-                  question: `What is the meaning of "${item.word}"?`,
-                  correctAnswer: item.meaning,
-                  options
-                });
-              }
-            }
-          });
-          break;
-          
-        case 'opposites':
-          module.content.forEach(item => {
-            if (item.word && item.opposite) {
-              const options = shuffleArray([
-                item.opposite,
-                ...getRandomOptions(module.content, 'opposite', item.opposite, 3)
-              ]);
-              if (options.length >= 2) {
-                generatedQuestions.push({
-                  type: 'opposite',
-                  question: `What is the opposite of "${item.word}"?`,
-                  correctAnswer: item.opposite,
-                  options
-                });
-              }
-            }
-          });
-          break;
-          
-        case 'qa':
-          module.content.forEach(item => {
-            if (item.question && item.answer && item.answer[0]) {
-              const options = shuffleArray([
-                item.answer[0],
-                ...generateFakeAnswers(3)
-              ]);
-              if (options.length >= 2) {
-                generatedQuestions.push({
-                  type: 'comprehension',
-                  question: item.question,
-                  correctAnswer: item.answer[0],
-                  options
-                });
-              }
-            }
-          });
-          break;
-      }
-    });
-    
-    return shuffleArray(generatedQuestions);
-  };
-
-  // Generate questions when lesson changes
   useEffect(() => {
-    const newQuestions = generateQuestions(lesson);
-    setQuestions(newQuestions);
-    // Reset state when lesson changes
+    // Generate questions from all modules in the lesson
+    const allModules = lesson.modules;
+    const allQuestions = allModules.flatMap(module => 
+      generateQuestionFromModule(module, allModules)
+    );
+    
+    setQuestions(shuffleArray(allQuestions));
     setCurrentQuestionIndex(0);
     setScore(0);
     setShowResults(false);
@@ -178,7 +153,6 @@ const TestModule = ({ lesson }) => {
     setIsAnswered(false);
   };
 
-  // Show message if no questions available
   if (!questions || questions.length === 0) {
     return (
       <div className="p-6 bg-white rounded-lg shadow-md">
