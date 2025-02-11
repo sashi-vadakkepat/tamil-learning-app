@@ -14,13 +14,13 @@ const Module = ({ module }) => {
 
   return (
     <div className="mb-4 sm:mb-6 rounded-lg border border-blue-100 shadow-sm hover:shadow-md transition-shadow duration-300 bg-white">
-      <div className="border-b border-blue-100 p-4">
+      <div className="border-b border-blue-100 p-3">
         <div className="flex items-center gap-2">
           {getIcon(module.type)}
           <h3 className="text-lg text-blue-900 font-semibold">{module.title}</h3>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 p-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 sm:gap-4 p-2 sm:p-4">
         {module.content.map((item, index) => (
           <div key={index} className="touch-manipulation">
             <ContentCard item={item} type={module.type} />
