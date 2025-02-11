@@ -256,7 +256,7 @@ const TamilLearningApp = () => {
     <div className="max-w-6xl mx-auto px-2 py-1 sm:p-4 bg-gradient-to-b from-blue-50 to-white min-h-screen">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-blue-900">
-          {selectedLesson ? 'Tamil Learning App' : 'Tamil Learning App'}
+          {selectedLesson ? 'Tamil Learning App' : 'Choose Your Mode'}
         </h1>
         {!selectedLesson && (
           <div className="flex gap-2 mt-4 sm:mt-0">
@@ -300,7 +300,10 @@ const TamilLearningApp = () => {
               </div>
               <div className="p-4">
                 <p className="text-gray-600">
-                  {lesson.modules.length} learning modules
+                  {mode === 'learn' 
+                    ? `${lesson.modules.length} learning modules`
+                    : `Practice test available`
+                  }
                 </p>
               </div>
             </div>
